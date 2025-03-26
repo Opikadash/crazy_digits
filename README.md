@@ -1,6 +1,3 @@
-# crazy_digits
-This repository contains the handwritten written digits recognition using CNN and MNIST.
-
 # Handwritten Digit Recognition (MNIST + User Corrections)
 
 This project is a real-time handwritten digit recognition system using **PyTorch, Flask, and HTML/CSS/JS**. It allows users to draw digits, get predictions, and submit corrections if the model is wrong. The model **automatically retrains on user corrections** to improve over time! 
