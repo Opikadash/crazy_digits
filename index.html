@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digit Recognition</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            text-align: center;
+            color: #333;
+        }
+        h1 { font-size: 2.5rem; }
+        canvas {
+            border: 2px solid #444;
+            background-color: #fff;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #result {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #correction-container {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        let isDrawing = false;
+        let canvas, ctx, predictedDigit = null;
+
+        window.onload = function() {
+            canvas = document.getElementById("canvas");
+            ctx = canvas.getContext("2d");
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            canvas.addEventListener("mousedown", startDrawing);
+            canvas.addEventListener("mousemove", draw);
+            canvas.addEventListener("mouseup", stopDrawing);
+            canvas.addEventListener("mouseout", stopDrawing);
+        };
+
+        function startDrawing(event) {
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(event.offsetX, event.offsetY);
+        }
+
+        function draw(event) {
+            if (!isDrawing) return;
+            ctx.lineWidth = 10;
+            ctx.lineCap = "round";
+            ctx.strokeStyle = "black";
+            ctx.lineTo(event.offsetX, event.offsetY);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.closePath();
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            document.getElementById("result").innerText = "";
+            document.getElementById("correction-container").style.display = "none";
+        }
+
+        function predictDigit() {
+            let imageData = canvas.toDataURL("image/png");
+            fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: imageData })
+            }).then(response => response.json()).then(data => {
+                predictedDigit = data.prediction;
+                document.getElementById("result").innerText = "Predicted Digit: " + predictedDigit;
+                document.getElementById("correction-container").style.display = "block";
+            });
+        }
+
+        function submitCorrection() {
+            let correctDigit = document.getElementById("correct-digit").value;
+            if (correctDigit !== "" && correctDigit >= 0 && correctDigit <= 9) {
+                let imageData = canvas.toDataURL("image/png");
+                fetch("/store_correction", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ image: imageData, correct_label: correctDigit })
+                }).then(response => response.json()).then(data => {
+                    alert("Correction stored! Model will learn from this when retrained.");
+                });
+            } else {
+                alert("Please enter a valid digit (0-9).");
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Handwritten Digit Recognition</h1>
+    <canvas id="canvas" width="200" height="200"></canvas>
+    <br>
+    <button onclick="predictDigit()">Predict</button>
+    <button onclick="clearCanvas()">Clear</button>
+    <p id="result"></p>
+    
+    <div id="correction-container">
+        <p>Was the prediction incorrect? Enter the correct digit:</p>
+        <input type="number" id="correct-digit" min="0" max="9">
+        <button onclick="submitCorrection()">Submit Correction</button>
+        <button onclick="predictDigit()">Predict Again</button>
+
+    </div>
+</body>
+</html>
