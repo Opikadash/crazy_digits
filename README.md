@@ -12,7 +12,7 @@ This project is a real-time handwritten digit recognition system using **PyTorch
 - Flask backend with PyTorch deep learning
 - Interactive UI with HTML, CSS, and JavaScript
 
-*(Add a GIF or Screenshot of your app here)*
+
 
 ---
 
